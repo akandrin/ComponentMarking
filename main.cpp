@@ -210,19 +210,76 @@ void print(const Image& image) {
 void FixNumeration(Pixel* arr, size_t size) {
   std::vector<bool> isLabelExist(maxLabelCount, false);
   for (size_t i = 0; i < size; ++i) {
+    assert(arr[i] <
+           isLabelExist.size());  // предполагается, что в массиве arr сейчас
+                                  // возможны от 0 до maxLabelCount
     isLabelExist[arr[i]] = true;
   }
+
+  // Получение значения максимальной метки
+  Pixel maxLabel = 0;
+  for (size_t i = 0; i < size; ++i) {
+    if (arr[i] > maxLabel) {
+      maxLabel = arr[i];
+    }
+  }
+
+  // Получение списка замен
+  struct Replace {
+    Pixel before;
+    Pixel after;
+
+    Replace(Pixel before, Pixel after) : before(before), after(after) {}
+  };
+  std::vector<Replace> replaceArr;
+  
+  Pixel currentNumber = 1; // переменная для нумерации
+  for (Pixel currentLabel = 1; currentLabel <= maxLabel;) {
+    // currentLabel - значение текущей метки
+    // если такой метки не существует, то идем до ближайшей существующей метки
+    // В этом цикле мы не можем выйти за пределы допустимого диапазона [1; maxLabel], потому что метка
+    // maxLabel обязательно существует.
+    while (!isLabelExist[currentLabel]) ++currentLabel;
+
+    if (currentLabel != currentNumber) {
+      // если текущая метка не равна текущему номеру, то добавляем "замену" в список замен
+      replaceArr.emplace_back(currentLabel, currentNumber);
+    }
+
+    ++currentLabel;
+    ++currentNumber;
+  }
+
+  for (auto replace : replaceArr) {
+    for (size_t i = 0; i < size; ++i) {
+      if (arr[i] == replace.before) arr[i] = replace.after;
+    }
+  }
+
 }
 
 
 int main() {
-  Image source = {
+
+  int arr[] = {1, 3, 10, 7, 1, 3, 10, 7, 1};
+  FixNumeration(arr, sizeof(arr) / sizeof(int));
+
+
+  /*Image source = {
       {1, 0, 1, 0, 1},
       {1, 0, 1, 1, 0}, 
       {1, 1, 1, 0, 1}, 
       {1, 0, 0, 0, 1},
       {1, 1, 1, 1, 1}
-  };
+  };*/
+
+  Image source = {
+    {1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1}
+};
 
   auto result = source;
   Classical_with_union_find(source, result);
